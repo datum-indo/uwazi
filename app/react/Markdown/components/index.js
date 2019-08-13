@@ -22,6 +22,8 @@ import GaugeChart from './GaugeChart';
 import Value from './Value';
 import SearchBox from './SearchBox';
 import EntityInfo from './EntityInfo';
+import ChartData from './ChartData';
+import * as recharts from 'recharts';
 
 export default {
   MarkdownMedia,
@@ -46,4 +48,6 @@ export default {
   Map,
   Link,
   EntityInfo,
+  ChartData,
+  ...recharts
 };

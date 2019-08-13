@@ -60,6 +60,13 @@ const getNodeTypeAndConfig = (_config, node, isCustomComponentPlaceholder, isCus
 
   type = availableComponents.includes(node.name ? node.name.toLowerCase() : '') ? components[node.name.toLowerCase()] : type;
 
+  Object.keys(config || {}).forEach((key) => {
+    const match = config[key].match(/\{(.*)\}/);
+    if (match) {
+      config[key] = eval(`(${match[1]})`);
+    }
+  });
+
   return { type, config };
 };
 
