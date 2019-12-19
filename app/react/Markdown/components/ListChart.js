@@ -1,4 +1,6 @@
-import React from 'react';
+/** @format */
+
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
@@ -10,54 +12,76 @@ import { arrayUtils } from 'app/Charts';
 import MarkdownLink from './MarkdownLink';
 import markdownDatasets from '../markdownDatasets';
 
-export const ListChartComponent = (props) => {
-  const { excludeZero, property, data, classname, context, colors, thesauris } = props;
-  const sliceColors = colors.split(',');
-
-  let output = <Loader/>;
-
-  if (data) {
-    const formattedData = arrayUtils.sortValues(
+class ListChartComponent extends Component {
+  formatData() {
+    const { excludeZero, property, data, context, thesauris } = this.props;
+    return arrayUtils.sortValues(
       arrayUtils.formatDataForChart(data, property, thesauris, {
         excludeZero: Boolean(excludeZero),
-        context
+        context,
       })
     );
+  }
+
+  conformQuery() {
+    const { baseUrl } = this.props;
+
     let query = { filters: {} };
 
-    if (props.baseUrl) {
-      const { q } = queryString.parse(props.baseUrl.substring(props.baseUrl.indexOf('?')));
+    if (baseUrl) {
+      const { q } = queryString.parse(baseUrl.substring(baseUrl.indexOf('?')));
       query = rison.decode(q);
       query.filters = query.filters || {};
     }
 
-    output = (
-      <ul>
-        {formattedData.map((item, index) => {
-          const Content = (
-            <div>
-              <div className="list-bullet" style={{ backgroundColor: sliceColors[index % sliceColors.length] }}>
-                <span>{item.results}</span>
-              </div>
-              <span className="list-label">{item.label}</span>
-            </div>
-          );
-
-          query.filters[property] = { values: [item.id] };
-
-          return (
-            <li key={item.id}>
-              {props.baseUrl && <MarkdownLink url={`/library/?q=${rison.encode(query)}`} classname="list-link">{Content}</MarkdownLink>}
-              {!props.baseUrl && Content}
-            </li>
-          );
-        })}
-      </ul>
-    );
+    return query;
   }
 
-  return <div className={`ListChart ${classname}`}>{output}</div>;
-};
+  render() {
+    const { property, data, classname, colors, baseUrl } = this.props;
+    const sliceColors = colors.split(',');
+
+    let output = <Loader />;
+
+    if (data) {
+      const formattedData = this.formatData();
+      const query = this.conformQuery();
+
+      output = (
+        <ul>
+          {formattedData.map((item, index) => {
+            const Content = (
+              <div>
+                <div
+                  className="list-bullet"
+                  style={{ backgroundColor: sliceColors[index % sliceColors.length] }}
+                >
+                  <span>{item.results}</span>
+                </div>
+                <span className="list-label">{item.label}</span>
+              </div>
+            );
+
+            query.filters[property] = { values: [item.id] };
+
+            return (
+              <li key={item.id}>
+                {baseUrl && (
+                  <MarkdownLink url={`/library/?q=${rison.encode(query)}`} classname="list-link">
+                    {Content}
+                  </MarkdownLink>
+                )}
+                {!baseUrl && Content}
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    return <div className={`ListChart ${classname}`}>{output}</div>;
+  }
+}
 
 ListChartComponent.defaultProps = {
   context: 'System',
@@ -76,10 +100,7 @@ ListChartComponent.propTypes = {
   colors: PropTypes.string,
   data: PropTypes.instanceOf(Immutable.List),
   baseUrl: PropTypes.string,
-  excludeZero: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.bool
-  ]),
+  excludeZero: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
 };
 
 export const mapStateToProps = (state, props) => ({
